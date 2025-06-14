@@ -75,10 +75,10 @@ int processar_jogadas(Rodada* r, Jogada* jogadas) {
         int idx = -1;
 
         // Determina a jogada com base no jogador
-        if (j == 0) idx = jogar_aleatorio1(NULL, 0);
-        else if (j == 1) idx = jogar_aleatorio2(NULL, 0);
-        else if (j == 2) idx = jogar_simples(NULL, 0);
-        else if (j == 3) idx = jogar_simples2(NULL, 0);
+        if (j == 0) idx = jogar_aleatorio1(NULL, 0, r->vitorias[j]);
+        else if (j == 1) idx = jogar_aleatorio2(NULL, 0, r->vitorias[j]);
+        else if (j == 2) idx = jogar_simples(NULL, 0, r->vitorias[j]);
+        else if (j == 3) idx = jogar_simples2(NULL, 0, r->vitorias[j]);
 
         // Verifica e processa o descarte
         if (checar_e_processar_descarte(idx, j, r, jogadas)) {
