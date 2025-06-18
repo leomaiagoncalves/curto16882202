@@ -65,7 +65,7 @@ void coletar_apostas(Rodada* r) {
 }
 
 // Função para processar as jogadas de todos os jogadores em ordem circular
-int processar_jogadas(Rodada* r, Jogada* jogadas) {
+int processar_jogadas(Rodada* r, Carta* cartas_na_mesa) {
     int novo_jogador_inicial = jogo.jogador_inicial_mao;
 
     for (int i = 0; i < jogo.num_jogadores; i++) {
@@ -75,13 +75,13 @@ int processar_jogadas(Rodada* r, Jogada* jogadas) {
         int idx = -1;
 
         // Determina a jogada com base no jogador
-        if (j == 0) idx = jogar_aleatorio1(NULL, 0, r->vitorias[j]);
-        else if (j == 1) idx = jogar_aleatorio2(NULL, 0, r->vitorias[j]);
-        else if (j == 2) idx = jogar_simples(NULL, 0, r->vitorias[j]);
-        else if (j == 3) idx = jogar_simples2(NULL, 0, r->vitorias[j]);
+        if (j == 0) idx = jogar_aleatorio1(cartas_na_mesa, j, r->vitorias[j]);
+        else if (j == 1) idx = jogar_aleatorio2(cartas_na_mesa, j, r->vitorias[j]);
+        else if (j == 2) idx = jogar_simples(cartas_na_mesa, j, r->vitorias[j]);
+        else if (j == 3) idx = jogar_simples2(cartas_na_mesa, j, r->vitorias[j]);
 
         // Verifica e processa o descarte
-        if (checar_e_processar_descarte(idx, j, r, jogadas)) {
+        if (checar_e_processar_descarte(idx, j, r, cartas_na_mesa)) {
             printf("Jogador %s tentou descartar uma carta inválida e foi eliminado!\n", jogo.nomes[j]);
 
             // Atualiza o jogador inicial se o jogador eliminado for o atual inicial

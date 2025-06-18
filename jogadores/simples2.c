@@ -39,11 +39,16 @@ int apostar_simples2(const int* apostas) {
     return aposta;
 }
 
+// Verifica se a carta é válida (não usada)
+int carta_valida(Carta carta) {
+    return (int) carta.valor >= 0 && (int) carta.naipe >= 0;
+}
+
 // Retorna o índice da menor carta que ganha de todas as cartas na mesa
 int menor_carta_que_ganha(const Carta* mesa, int num_na_mesa) {
     int idx = -1;
     for (int i = 0; i < num_cartas; i++) {
-        if (mao[i].valor < 0) continue;
+        if (!carta_valida(mao[i])) continue; // Ignora cartas usadas
         int ganha = 1;
         for (int j = 0; j < num_na_mesa; j++) {
             if (comparar_cartas(mao[i], mesa[j], manilha_atual) <= 0) {
@@ -55,6 +60,7 @@ int menor_carta_que_ganha(const Carta* mesa, int num_na_mesa) {
             idx = i;
         }
     }
+
     return idx;
 }
 
@@ -62,7 +68,7 @@ int menor_carta_que_ganha(const Carta* mesa, int num_na_mesa) {
 int maior_carta_que_perde(const Carta* mesa, int num_na_mesa) {
     int idx = -1;
     for (int i = 0; i < num_cartas; i++) {
-        if (mao[i].valor < 0) continue;
+        if (!carta_valida(mao[i])) continue; // Ignora cartas usadas
         int perde = 1;
         for (int j = 0; j < num_na_mesa; j++) {
             if (comparar_cartas(mao[i], mesa[j], manilha_atual) >= 0) {
@@ -74,19 +80,52 @@ int maior_carta_que_perde(const Carta* mesa, int num_na_mesa) {
             idx = i;
         }
     }
+
     return idx;
 }
 
-// Se não encontrar carta adequada, joga a menor disponível
+// Encontra a menor carta disponível na mão
 int menor_disponivel() {
     int idx = -1;
+
     for (int i = 0; i < num_cartas; i++) {
-        if (mao[i].valor >= 0 && (idx == -1 || comparar_cartas(mao[i], mao[idx], manilha_atual) < 0)) {
-            idx = i;
+        // Verifica se a carta é válida (não usada)
+        if (carta_valida(mao[i])) {
+            // Atualiza o índice se for a menor carta disponível
+            if (idx == -1 || comparar_cartas(mao[i], mao[idx], manilha_atual) < 0) {
+                idx = i;
+            }
         }
+    }
+
+    // Verifica se encontrou uma carta válida
+    if (idx == -1) {
+        printf("Erro: Nenhuma carta válida disponível na mão!\n");
     }
     return idx;
 }
+
+// Encontra a maior carta disponível na mão
+int maior_disponivel() {
+    int idx = -1;
+
+    for (int i = 0; i < num_cartas; i++) {
+        // Verifica se a carta é válida (não usada)
+        if (carta_valida(mao[i])) {
+            // Atualiza o índice se for a maior carta disponível
+            if (idx == -1 || comparar_cartas(mao[i], mao[idx], manilha_atual) > 0) {
+                idx = i;
+            }
+        }
+    }
+
+    // Verifica se encontrou uma carta válida
+    if (idx == -1) {
+        printf("Erro: Nenhuma carta válida disponível na mão!\n");
+    }
+    return idx;
+}
+
 
 int jogar_simples2(const Carta* mesa, const int num_na_mesa, const int vitorias) {
     int idx = -1;
@@ -95,8 +134,9 @@ int jogar_simples2(const Carta* mesa, const int num_na_mesa, const int vitorias)
         if (idx == -1) idx = menor_disponivel();
     } else {
         idx = maior_carta_que_perde(mesa, num_na_mesa);
-        if (idx == -1) idx = menor_disponivel();
+        if (idx == -1) idx = maior_disponivel();
     }
-    mao[idx].valor = -1; // Marca como usada
+
+    mao[idx] = USADA; // Marca como usada
     return idx;
 }

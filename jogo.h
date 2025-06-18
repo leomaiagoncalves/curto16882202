@@ -15,9 +15,9 @@ typedef struct {
 
 extern Jogo jogo;
 
-int checar_e_processar_descarte(int idx, int jogador, Rodada* r, Jogada* jogadas);
+int checar_e_processar_descarte(int idx, int jogador, Rodada* r, Carta* cartas);
 void imprimir_maos_jogadores(int rodada, const Rodada* r);
-void imprimir_mesa(const Jogada* jogadas);
+void imprimir_mesa(const Carta* cartas);
 void imprimir_resultados_rodada(int rodada, const Rodada* r);
 void processar_resultado_mao(int vencedor, Rodada* r);
 void executar_rodada(int rodada);
@@ -28,6 +28,6 @@ void jogar_rodada(Rodada* r);
 extern void iniciar_jogadores();
 extern void informar_maos_para_jogadores(int rodada, const Rodada* r);
 extern void coletar_apostas(Rodada* r);
-extern int processar_jogadas(Rodada* r, Jogada* jogadas);
+extern int processar_jogadas(Rodada* r, Carta* cartas);
 
 #endif

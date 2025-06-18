@@ -14,12 +14,12 @@ int comparar_cartas(Carta a, Carta b, Valor manilha) {
 }
 
 // retorna o índice da jogada vencedora, ou -1 em caso de empate entre não-manilhas
-int resolver_mao(Jogada* jogadas, int num_jogadores, Valor manilha) {
+int resolver_mao(Carta* jogadas, int num_jogadores, Valor manilha) {
     int vencedor = 0;
     int empate = 0;
 
     for (int i = 1; i < num_jogadores; i++) {
-        int comp = comparar_cartas(jogadas[i].carta, jogadas[vencedor].carta, manilha);
+        int comp = comparar_cartas(jogadas[i], jogadas[vencedor], manilha);
         if (comp > 0) {
             vencedor = i;
             empate = 0;

@@ -6,10 +6,9 @@
 #include "mao.h"
 #include "jogo.h"
 
-int checar_e_processar_descarte(int idx, int jogador, Rodada* r, Jogada* jogadas) {
+int checar_e_processar_descarte(int idx, int jogador, Rodada* r, Carta* cartas) {
     if (idx < 0 || idx >= r->cartas_por_jogador) {
         jogo.penalidades[jogador] = 9999;
-        jogadas[jogador].jogador_id = jogador;
         return 1;
     }
 
@@ -18,12 +17,10 @@ int checar_e_processar_descarte(int idx, int jogador, Rodada* r, Jogada* jogadas
     // Verifica se a carta já foi usada (naipe e valor iguais a -1 indicam carta descartada)
     if (carta_foi_usada(carta_escolhida)) {
         jogo.penalidades[jogador] = 9999;
-        jogadas[jogador].jogador_id = jogador;
         return 1;
     }
 
-    jogadas[jogador].jogador_id = jogador;
-    jogadas[jogador].carta = carta_escolhida;
+    cartas[jogador] = carta_escolhida;
 
     // Marca a carta como usada
     r->maos[jogador][idx] = USADA;
@@ -45,15 +42,15 @@ void imprimir_maos_jogadores(int rodada, const Rodada* r) {
     printf("\n");
 }
 
-void imprimir_mesa(const Jogada* jogadas) {
+void imprimir_mesa(const Carta* cartas) {
     printf("Mesa:\n");
     for (int i = 0; i < jogo.num_jogadores; i++) {
         // Calcula o índice do jogador atual em ordem circular
         int j = (jogo.jogador_inicial_mao + i) % jogo.num_jogadores;
 
         // Imprime o nome do jogador e a carta jogada
-        printf("%s:\t", jogo.nomes[jogadas[j].jogador_id]);
-        imprimir_carta(jogadas[j].carta);
+        printf("%s:\t", jogo.nomes[j]);
+        imprimir_carta(cartas[j]);
         getchar();
     }
     printf("\n");
@@ -118,16 +115,16 @@ void imprimir_resultado_final() {
 
 void jogar_rodada(Rodada* r) {
     for (int i = 0; i < r->cartas_por_jogador; i++) {
-        Jogada jogadas[jogo.num_jogadores];
+        Carta cartas[jogo.num_jogadores];
 
         // Processa as jogadas de todos os jogadores em ordem circular
-        processar_jogadas(r, jogadas);
+        processar_jogadas(r, cartas);
 
         // Imprime a mesa após as jogadas
-        imprimir_mesa(jogadas);
+        imprimir_mesa(cartas);
 
         // Resolve a mão e determina o vencedor
-        int vencedor = resolver_mao(jogadas, jogo.num_jogadores, r->manilha);
+        int vencedor = resolver_mao(cartas, jogo.num_jogadores, r->manilha);
 
         // Processa o resultado da mão e atualiza o jogador inicial
         processar_resultado_mao(vencedor, r);

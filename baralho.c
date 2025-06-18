@@ -40,6 +40,10 @@ void imprimir_valor(Valor v) {
 
 void imprimir_carta(Carta c) {
     char* simbolos_naipe[] = {"♦", "♠", "♥", "♣"};
+    if(c.valor < 0){
+        printf("Carta inválida\n");
+        return;
+    }
     imprimir_valor(c.valor);
     printf("%s", simbolos_naipe[c.naipe]);
 }
