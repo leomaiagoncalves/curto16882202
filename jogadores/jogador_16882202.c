@@ -10,13 +10,6 @@ static int manilha_global;
 
 extern const Carta USADA;
 
-// Função apenas para a aposta simples
-static int get_forca_simples(Carta c) {
-    if (c.valor == manilha_global) return 10;
-    if (c.valor == TRES || c.valor == DOIS || c.valor == AS) return 5;
-    return 1;
-}
-
 const char* nome_16882202() {
     return "jogador_16882202";
 }
@@ -34,7 +27,7 @@ void nova_rodada_16882202(int rodada, const Carta carta_virada, int n_cartas, co
 }
 
 int apostar_16882202(const int* apostas) {
-    // Aposta simples: 1 se tiver manilha, 0 se não tiver.
+    // Aposta simples e segura: 1 se tiver manilha, 0 se não.
     for (int i = 0; i < num_cartas_total_rodada; i++) {
         if (minha_mao_global[i].valor == manilha_global) {
             return 1;
@@ -43,24 +36,24 @@ int apostar_16882202(const int* apostas) {
     return 0;
 }
 
-// LÓGICA DE JOGO "BURRA" E SEGURA
+// VERSÃO "PARANOICA" E DEFENSIVA
 int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
     int indice_a_jogar = -1;
 
-    // Acha o primeiro índice de uma carta que ainda não foi usada.
+    // Tenta achar a primeira carta disponível.
     for (int i = 0; i < num_cartas_total_rodada; i++) {
         if (!carta_foi_usada(minha_mao_global[i])) {
             indice_a_jogar = i;
-            break; // Achou a primeira, para o loop.
+            break; 
         }
     }
 
-    // Se achou uma carta (o que sempre deve acontecer)
-    if (indice_a_jogar != -1) {
-        // Marca a carta como usada para não jogar de novo.
-        minha_mao_global[indice_a_jogar] = USADA;
+   
+    if (indice_a_jogar == -1) {
+        indice_a_jogar = 0;
     }
     
-    // Retorna o índice da primeira carta válida que encontrou.
+    minha_mao_global[indice_a_jogar] = USADA;
+    
     return indice_a_jogar;
 }
