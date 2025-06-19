@@ -1,6 +1,7 @@
 #include "jogador_16882202.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "../baralho.h"
 
 static int meu_id_global;
 static int num_cartas_atuais;
