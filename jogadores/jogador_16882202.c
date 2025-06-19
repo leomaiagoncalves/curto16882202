@@ -27,7 +27,7 @@ void iniciar_16882202(const int id, const int n_jogadores) {
     meu_id_global = id;
 }
 
-void nova_rodada_16882202(int rodada, const Carta carta_virada, int n_cartas, Carta* mao) {
+void nova_rodada_16882202(int rodada, const Carta carta_virada, int n_cartas, const Carta* mao) {
     num_cartas_atuais = n_cartas;
     manilha_global = get_manilha(carta_virada);
 
