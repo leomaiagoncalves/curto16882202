@@ -4,10 +4,12 @@
 #include <stdlib.h>
 
 static int meu_id_global;
-static int num_cartas_atuais;
+static int num_cartas_total_rodada;
 static Carta minha_mao_global[6];
 static int manilha_global;
 static int minha_aposta_global;
+
+extern const Carta USADA;
 
 static int get_forca_interna(Carta c) {
     if (c.valor == manilha_global) {
@@ -28,13 +30,6 @@ static int get_forca_interna(Carta c) {
     return -1;
 }
 
-static void remover_carta_da_mao_interna(int index) {
-    for (int i = index; i < num_cartas_atuais - 1; i++) {
-        minha_mao_global[i] = minha_mao_global[i + 1];
-    }
-    num_cartas_atuais--;
-}
-
 const char* nome_16882202() {
     return "jogador_16882202";
 }
@@ -44,7 +39,7 @@ void iniciar_16882202(const int id, const int n_jogadores) {
 }
 
 void nova_rodada_16882202(int rodada, const Carta carta_virada, int n_cartas, const Carta* mao) {
-    num_cartas_atuais = n_cartas;
+    num_cartas_total_rodada = n_cartas;
     manilha_global = definir_manilha(carta_virada);
     for (int i = 0; i < n_cartas; i++) {
         minha_mao_global[i] = mao[i];
@@ -53,7 +48,7 @@ void nova_rodada_16882202(int rodada, const Carta carta_virada, int n_cartas, co
 
 int apostar_16882202(const int* apostas) {
     int cartas_fortes = 0;
-    for (int i = 0; i < num_cartas_atuais; i++) {
+    for (int i = 0; i < num_cartas_total_rodada; i++) {
         if (get_forca_interna(minha_mao_global[i]) >= 7) {
             cartas_fortes++;
         }
@@ -78,7 +73,9 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
     if (vitorias < minha_aposta_global) {
         int idx_menor_ganhadora = -1;
         int forca_menor_ganhadora = 100;
-        for (int i = 0; i < num_cartas_atuais; i++) {
+        for (int i = 0; i < num_cartas_total_rodada; i++) {
+            if (carta_foi_usada(minha_mao_global[i])) continue;
+
             int forca_minha_carta = get_forca_interna(minha_mao_global[i]);
             if (forca_minha_carta > forca_max_mesa) {
                 if (forca_minha_carta < forca_menor_ganhadora) {
@@ -90,9 +87,10 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
         if (idx_menor_ganhadora != -1) {
             indice_escolhido = idx_menor_ganhadora;
         } else {
-            int idx_pior_carta = 0;
-            int forca_pior_carta = get_forca_interna(minha_mao_global[0]);
-            for(int i = 1; i < num_cartas_atuais; i++) {
+            int idx_pior_carta = -1;
+            int forca_pior_carta = 100;
+            for(int i = 0; i < num_cartas_total_rodada; i++) {
+                if (carta_foi_usada(minha_mao_global[i])) continue;
                 if(get_forca_interna(minha_mao_global[i]) < forca_pior_carta) {
                     forca_pior_carta = get_forca_interna(minha_mao_global[i]);
                     idx_pior_carta = i;
@@ -103,7 +101,9 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
     } else {
         int idx_maior_perdedora = -1;
         int forca_maior_perdedora = -1;
-        for (int i = 0; i < num_cartas_atuais; i++) {
+        for (int i = 0; i < num_cartas_total_rodada; i++) {
+            if (carta_foi_usada(minha_mao_global[i])) continue;
+
             int forca_minha_carta = get_forca_interna(minha_mao_global[i]);
             if (forca_minha_carta < forca_max_mesa) {
                 if (forca_minha_carta > forca_maior_perdedora) {
@@ -115,9 +115,10 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
         if (idx_maior_perdedora != -1) {
             indice_escolhido = idx_maior_perdedora;
         } else {
-            int idx_pior_carta = 0;
-            int forca_pior_carta = get_forca_interna(minha_mao_global[0]);
-            for(int i = 1; i < num_cartas_atuais; i++) {
+            int idx_pior_carta = -1;
+            int forca_pior_carta = 100;
+            for(int i = 0; i < num_cartas_total_rodada; i++) {
+                if (carta_foi_usada(minha_mao_global[i])) continue;
                 if(get_forca_interna(minha_mao_global[i]) < forca_pior_carta) {
                     forca_pior_carta = get_forca_interna(minha_mao_global[i]);
                     idx_pior_carta = i;
@@ -126,6 +127,8 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
             indice_escolhido = idx_pior_carta;
         }
     }
-    remover_carta_da_mao_interna(indice_escolhido);
+    
+    minha_mao_global[indice_escolhido] = USADA;
+    
     return indice_escolhido;
 }
