@@ -16,15 +16,9 @@ static int get_forca_interna(Carta c) {
         return 10 + c.naipe;
     }
     switch(c.valor) {
-        case 4: return 0;
-        case 5: return 1;
-        case 6: return 2;
-        case 7: return 3;
-        case 10: return 4;
-        case 11: return 5;
-        case 12: return 6;
-        case 1: return 7;
-        case 2: return 8;
+        case 4: return 0; case 5: return 1; case 6: return 2;
+        case 7: return 3; case 10: return 4; case 11: return 5;
+        case 12: return 6; case 1: return 7; case 2: return 8;
         case 3: return 9;
     }
     return -1;
@@ -71,64 +65,68 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
     int indice_escolhido = -1;
 
     if (vitorias < minha_aposta_global) {
-        int idx_menor_ganhadora = -1;
-        int forca_menor_ganhadora = 100;
+        // TENTAR GANHAR com a carta mais fraca possível que ainda ganha
+        int idx_candidato = -1;
+        int forca_candidato = 101; 
         for (int i = 0; i < num_cartas_total_rodada; i++) {
             if (carta_foi_usada(minha_mao_global[i])) continue;
-
-            int forca_minha_carta = get_forca_interna(minha_mao_global[i]);
-            if (forca_minha_carta > forca_max_mesa) {
-                if (forca_minha_carta < forca_menor_ganhadora) {
-                    idx_menor_ganhadora = i;
-                    forca_menor_ganhadora = forca_minha_carta;
-                }
+            int f = get_forca_interna(minha_mao_global[i]);
+            if (f > forca_max_mesa && f < forca_candidato) {
+                idx_candidato = i;
+                forca_candidato = f;
             }
         }
-        if (idx_menor_ganhadora != -1) {
-            indice_escolhido = idx_menor_ganhadora;
+
+        if (idx_candidato != -1) {
+            indice_escolhido = idx_candidato;
         } else {
-            int idx_pior_carta = -1;
-            int forca_pior_carta = 100;
-            for(int i = 0; i < num_cartas_total_rodada; i++) {
+            // Se não pode ganhar, descarta a carta mais fraca
+            idx_candidato = -1;
+            forca_candidato = 101;
+            for (int i = 0; i < num_cartas_total_rodada; i++) {
                 if (carta_foi_usada(minha_mao_global[i])) continue;
-                if(get_forca_interna(minha_mao_global[i]) < forca_pior_carta) {
-                    forca_pior_carta = get_forca_interna(minha_mao_global[i]);
-                    idx_pior_carta = i;
+                int f = get_forca_interna(minha_mao_global[i]);
+                if (f < forca_candidato) {
+                    idx_candidato = i;
+                    forca_candidato = f;
                 }
             }
-            indice_escolhido = idx_pior_carta;
+            indice_escolhido = idx_candidato;
         }
     } else {
-        int idx_maior_perdedora = -1;
-        int forca_maior_perdedora = -1;
+        // TENTAR PERDER com a carta mais forte possível que ainda perde
+        int idx_candidato = -1;
+        int forca_candidato = -1; 
         for (int i = 0; i < num_cartas_total_rodada; i++) {
             if (carta_foi_usada(minha_mao_global[i])) continue;
-
-            int forca_minha_carta = get_forca_interna(minha_mao_global[i]);
-            if (forca_minha_carta < forca_max_mesa) {
-                if (forca_minha_carta > forca_maior_perdedora) {
-                    idx_maior_perdedora = i;
-                    forca_maior_perdedora = forca_minha_carta;
-                }
+            int f = get_forca_interna(minha_mao_global[i]);
+            if (f < forca_max_mesa && f > forca_candidato) {
+                idx_candidato = i;
+                forca_candidato = f;
             }
         }
-        if (idx_maior_perdedora != -1) {
-            indice_escolhido = idx_maior_perdedora;
+        
+        if (idx_candidato != -1) {
+            indice_escolhido = idx_candidato;
         } else {
-            int idx_pior_carta = -1;
-            int forca_pior_carta = 100;
-            for(int i = 0; i < num_cartas_total_rodada; i++) {
+            // Se é forçado a ganhar, joga a carta mais fraca para minimizar o dano
+            idx_candidato = -1;
+            forca_candidato = 101;
+            for (int i = 0; i < num_cartas_total_rodada; i++) {
                 if (carta_foi_usada(minha_mao_global[i])) continue;
-                if(get_forca_interna(minha_mao_global[i]) < forca_pior_carta) {
-                    forca_pior_carta = get_forca_interna(minha_mao_global[i]);
-                    idx_pior_carta = i;
+                int f = get_forca_interna(minha_mao_global[i]);
+                if (f < forca_candidato) {
+                    idx_candidato = i;
+                    forca_candidato = f;
                 }
             }
-            indice_escolhido = idx_pior_carta;
+            indice_escolhido = idx_candidato;
         }
     }
-    
-    minha_mao_global[indice_escolhido] = USADA;
+
+    if (indice_escolhido != -1) {
+        minha_mao_global[indice_escolhido] = USADA;
+    }
     
     return indice_escolhido;
 }
