@@ -1,6 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99
 JOGADORES = jogadores/aleatorio1.c jogadores/aleatorio2.c jogadores/simples.c jogadores/simples2.c jogadores/jogador_16882202.c
+
 OBJ = baralho.o mao.o rodada.o jogo.o
 
 all: main
