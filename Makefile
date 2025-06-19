@@ -1,22 +1,38 @@
+# Makefile final, robusto e à prova de erros de linkagem
+
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99
-JOGADORES = jogadores/aleatorio1.c jogadores/aleatorio2.c jogadores/simples.c jogadores/simples2.c jogadores/jogador_16882202.c
 
-OBJ = baralho.o mao.o rodada.o jogo.o
+# Lista de todos os arquivos .c que precisam ser compilados
+SOURCES = main.c baralho.c mao.c rodada.c jogo.c jogadores/aleatorio1.c jogadores/aleatorio2.c jogadores/simples.c jogadores/simples2.c jogadores/jogador_16882202.c
 
-all: main
+# Converte a lista de .c para .o
+OBJS = $(SOURCES:.c=.o)
 
-main:
-	$(CC) $(CFLAGS) -o main main.c baralho.c mao.c rodada.c jogo.c $(JOGADORES)
+# Nome do executável
+TARGET = main
 
-teste_baralho: baralho.c teste_baralho.c
-	$(CC) $(CFLAGS) -o teste_baralho baralho.c teste_baralho.c
+# Regra principal
+all: $(TARGET)
 
-teste_mao: $(OBJ) teste_mao.c
-	$(CC) $(CFLAGS) -o teste_mao $(OBJ) teste_mao.c
+# Regra para JUNTAR as peças e criar o 'main'
+$(TARGET): $(OBJS)
+	@echo ">>> Linkando para criar o programa final..."
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
 
-teste_rodada: rodada.c baralho.c teste_rodada.c
-	$(CC) $(CFLAGS) -o teste_rodada rodada.c baralho.c teste_rodada.c
+# Regra para CRIAR as peças (.o) a partir dos códigos (.c)
+%.o: %.c
+	@echo ">>> Compilando $<..."
+	$(CC) $(CFLAGS) -c -o $@ $<
 
+# Regra para criar as peças dos jogadores que estão em uma subpasta
+jogadores/%.o: jogadores/%.c
+	@echo ">>> Compilando jogador $<..."
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# Regra para limpar tudo
 clean:
-	rm -f *.o teste_baralho teste_mao main
+	@echo "Limpando..."
+	rm -f *.o jogadores/*.o $(TARGET)
+
+.PHONY: all clean
