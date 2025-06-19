@@ -7,7 +7,6 @@ int topo = TOTAL_CARTAS;
 
 const Carta USADA = { (Valor)-1, (Naipe)-1 };
 
-// Verifica se a carta foi usada
 int carta_foi_usada(Carta carta) {
     return carta.valor == USADA.valor && carta.naipe == USADA.naipe;
 }
@@ -39,7 +38,8 @@ void imprimir_valor(Valor v) {
 }
 
 void imprimir_carta(Carta c) {
-    char* simbolos_naipe[] = {"♦", "♠", "♥", "♣"};
+    char* simbolos_naipe[] = {"O", "E", "C", "P"};
+    
     if(c.valor < 0){
         printf("Carta inválida\n");
         return;
@@ -54,7 +54,7 @@ Carta virar_carta(Carta* baralho) {
 
 Valor definir_manilha(Carta carta_virada) {
     if (carta_virada.valor == TRES) 
-        return QUATRO; // Manilha é o Quatro
+        return QUATRO;
     
     return carta_virada.valor + 1;
 }
