@@ -7,21 +7,14 @@ static int meu_id_global;
 static int num_cartas_total_rodada;
 static Carta minha_mao_global[6];
 static int manilha_global;
-static int minha_aposta_global;
 
 extern const Carta USADA;
 
-static int get_forca_interna(Carta c) {
-    if (c.valor == manilha_global) {
-        return 10 + c.naipe;
-    }
-    switch(c.valor) {
-        case 4: return 0; case 5: return 1; case 6: return 2;
-        case 7: return 3; case 10: return 4; case 11: return 5;
-        case 12: return 6; case 1: return 7; case 2: return 8;
-        case 3: return 9;
-    }
-    return -1;
+// Função apenas para a aposta simples
+static int get_forca_simples(Carta c) {
+    if (c.valor == manilha_global) return 10;
+    if (c.valor == TRES || c.valor == DOIS || c.valor == AS) return 5;
+    return 1;
 }
 
 const char* nome_16882202() {
@@ -41,92 +34,33 @@ void nova_rodada_16882202(int rodada, const Carta carta_virada, int n_cartas, co
 }
 
 int apostar_16882202(const int* apostas) {
-    int cartas_fortes = 0;
+    // Aposta simples: 1 se tiver manilha, 0 se não tiver.
     for (int i = 0; i < num_cartas_total_rodada; i++) {
-        if (get_forca_interna(minha_mao_global[i]) >= 7) {
-            cartas_fortes++;
+        if (minha_mao_global[i].valor == manilha_global) {
+            return 1;
         }
     }
-    minha_aposta_global = cartas_fortes;
-    return minha_aposta_global;
+    return 0;
 }
 
+// LÓGICA DE JOGO "BURRA" E SEGURA
 int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
-    int forca_max_mesa = -1;
-    if (n_cartas_na_mesa > 0) {
-        for (int i = 0; i < n_cartas_na_mesa; i++) {
-            int forca_atual = get_forca_interna(mesa[i]);
-            if (forca_atual > forca_max_mesa) {
-                forca_max_mesa = forca_atual;
-            }
+    int indice_a_jogar = -1;
+
+    // Acha o primeiro índice de uma carta que ainda não foi usada.
+    for (int i = 0; i < num_cartas_total_rodada; i++) {
+        if (!carta_foi_usada(minha_mao_global[i])) {
+            indice_a_jogar = i;
+            break; // Achou a primeira, para o loop.
         }
     }
 
-    int indice_escolhido = -1;
-
-    if (vitorias < minha_aposta_global) {
-        // TENTAR GANHAR com a carta mais fraca possível que ainda ganha
-        int idx_candidato = -1;
-        int forca_candidato = 101; 
-        for (int i = 0; i < num_cartas_total_rodada; i++) {
-            if (carta_foi_usada(minha_mao_global[i])) continue;
-            int f = get_forca_interna(minha_mao_global[i]);
-            if (f > forca_max_mesa && f < forca_candidato) {
-                idx_candidato = i;
-                forca_candidato = f;
-            }
-        }
-
-        if (idx_candidato != -1) {
-            indice_escolhido = idx_candidato;
-        } else {
-            // Se não pode ganhar, descarta a carta mais fraca
-            idx_candidato = -1;
-            forca_candidato = 101;
-            for (int i = 0; i < num_cartas_total_rodada; i++) {
-                if (carta_foi_usada(minha_mao_global[i])) continue;
-                int f = get_forca_interna(minha_mao_global[i]);
-                if (f < forca_candidato) {
-                    idx_candidato = i;
-                    forca_candidato = f;
-                }
-            }
-            indice_escolhido = idx_candidato;
-        }
-    } else {
-        // TENTAR PERDER com a carta mais forte possível que ainda perde
-        int idx_candidato = -1;
-        int forca_candidato = -1; 
-        for (int i = 0; i < num_cartas_total_rodada; i++) {
-            if (carta_foi_usada(minha_mao_global[i])) continue;
-            int f = get_forca_interna(minha_mao_global[i]);
-            if (f < forca_max_mesa && f > forca_candidato) {
-                idx_candidato = i;
-                forca_candidato = f;
-            }
-        }
-        
-        if (idx_candidato != -1) {
-            indice_escolhido = idx_candidato;
-        } else {
-            // Se é forçado a ganhar, joga a carta mais fraca para minimizar o dano
-            idx_candidato = -1;
-            forca_candidato = 101;
-            for (int i = 0; i < num_cartas_total_rodada; i++) {
-                if (carta_foi_usada(minha_mao_global[i])) continue;
-                int f = get_forca_interna(minha_mao_global[i]);
-                if (f < forca_candidato) {
-                    idx_candidato = i;
-                    forca_candidato = f;
-                }
-            }
-            indice_escolhido = idx_candidato;
-        }
-    }
-
-    if (indice_escolhido != -1) {
-        minha_mao_global[indice_escolhido] = USADA;
+    // Se achou uma carta (o que sempre deve acontecer)
+    if (indice_a_jogar != -1) {
+        // Marca a carta como usada para não jogar de novo.
+        minha_mao_global[indice_a_jogar] = USADA;
     }
     
-    return indice_escolhido;
+    // Retorna o índice da primeira carta válida que encontrou.
+    return indice_a_jogar;
 }
