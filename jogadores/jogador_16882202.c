@@ -1,10 +1,7 @@
 #include "jogador_16882202.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
 #include "../baralho.h"
-
+#include <stdio.h>
+#include <stdlib.h>
 
 static int meu_id_global;
 static int num_cartas_atuais;
@@ -30,7 +27,6 @@ void iniciar_16882202(const int id, const int n_jogadores) {
 void nova_rodada_16882202(int rodada, const Carta carta_virada, int n_cartas, const Carta* mao) {
     num_cartas_atuais = n_cartas;
     manilha_global = get_manilha(carta_virada);
-
     for (int i = 0; i < n_cartas; i++) {
         minha_mao_global[i] = mao[i];
     }
@@ -63,7 +59,6 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
     if (vitorias < minha_aposta_global) {
         int idx_menor_ganhadora = -1;
         int forca_menor_ganhadora = 100;
-
         for (int i = 0; i < num_cartas_atuais; i++) {
             int forca_minha_carta = get_forca(minha_mao_global[i], manilha_global);
             if (forca_minha_carta > forca_max_mesa) {
@@ -73,7 +68,6 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
                 }
             }
         }
-
         if (idx_menor_ganhadora != -1) {
             indice_escolhido = idx_menor_ganhadora;
         } else {
@@ -90,7 +84,6 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
     } else {
         int idx_maior_perdedora = -1;
         int forca_maior_perdedora = -1;
-
         for (int i = 0; i < num_cartas_atuais; i++) {
             int forca_minha_carta = get_forca(minha_mao_global[i], manilha_global);
             if (forca_minha_carta < forca_max_mesa) {
@@ -100,7 +93,6 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
                 }
             }
         }
-        
         if (idx_maior_perdedora != -1) {
             indice_escolhido = idx_maior_perdedora;
         } else {
@@ -115,8 +107,6 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
             indice_escolhido = idx_pior_carta;
         }
     }
-
     remover_carta_da_mao_interna(indice_escolhido);
-    
     return indice_escolhido;
 }
