@@ -6,8 +6,8 @@ OBJ = baralho.o mao.o rodada.o jogo.o
 
 all: main teste_baralho teste_mao teste_rodada
 
-main: main.c $(OBJ) $(JOGADORES)
-	$(CC) $(CFLAGS) -o main main.c $(OBJ) $(JOGADORES)
+main:
+	$(CC) $(CFLAGS) -o main main.c baralho.c mao.c rodada.c jogo.c $(JOGADORES)
 
 teste_baralho: baralho.c teste_baralho.c
 	$(CC) $(CFLAGS) -o teste_baralho baralho.c teste_baralho.c
