@@ -42,7 +42,7 @@ static void atualizar_trackers(const Carta* mesa, int n_cartas_na_mesa) {
 }
 
 const char* nome_jogador_16882202() {
-    return "Jogador Estrategista";
+    return "jogador_16882202";
 }
 
 void iniciar_16882202(const int id, const int n_jogadores) {
