@@ -12,34 +12,7 @@ static Carta minha_mao_global[6];
 static int manilha_global;
 static int minha_aposta_global;
 
-static bool tracker_manilhas[4];
-static bool tracker_tres[4];
-static bool tracker_dois[4];
-static bool tracker_as[4];
-
 extern const Carta USADA;
-
-static int get_forca_interna(Carta c) {
-    if (c.valor == -1) return -1;
-    if (c.valor == manilha_global) return 10 + c.naipe;
-    switch(c.valor) {
-        case QUATRO: return 0; case CINCO: return 1; case SEIS: return 2;
-        case SETE: return 3; case DAMA: return 4; case VALETE: return 5;
-        case REI: return 6; case AS: return 7; case DOIS: return 8;
-        case TRES: return 9;
-    }
-    return -1;
-}
-
-static void atualizar_trackers(const Carta* mesa, int n_cartas_na_mesa) {
-    for (int i = 0; i < n_cartas_na_mesa; i++) {
-        Carta c = mesa[i];
-        if (c.valor == manilha_global) tracker_manilhas[c.naipe] = false;
-        else if (c.valor == TRES) tracker_tres[c.naipe] = false;
-        else if (c.valor == DOIS) tracker_dois[c.naipe] = false;
-        else if (c.valor == AS) tracker_as[c.naipe] = false;
-    }
-}
 
 const char* nome_jogador_16882202() {
     return "jogador_16882202";
@@ -52,15 +25,9 @@ void iniciar_16882202(const int id, const int n_jogadores) {
 
 void nova_rodada_16882202(int rodada, const Carta carta_virada, int n_cartas, const Carta* mao) {
     num_cartas_total_rodada = n_cartas;
-    manilha_global = definir_manilha(carta_virada);
+    manilha_global = get_manilha(carta_virada);
     for (int i = 0; i < n_cartas; i++) {
         minha_mao_global[i] = mao[i];
-    }
-    for (int i = 0; i < 4; i++) {
-        tracker_manilhas[i] = true;
-        tracker_tres[i] = true;
-        tracker_dois[i] = true;
-        tracker_as[i] = true;
     }
 }
 
@@ -68,7 +35,7 @@ int apostar_16882202(const int* apostas) {
     int num_manilhas = 0;
     bool tem_o_3 = false;
     for (int i = 0; i < num_cartas_total_rodada; i++) {
-        int forca = get_forca_interna(minha_mao_global[i]);
+        int forca = get_forca(minha_mao_global[i], manilha_global);
         if (forca >= 10) num_manilhas++;
         if (forca == 9) tem_o_3 = true;
     }
@@ -101,12 +68,10 @@ int apostar_16882202(const int* apostas) {
 }
 
 int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
-    atualizar_trackers(mesa, n_cartas_na_mesa);
-
     int forca_max_mesa = -1;
     if (n_cartas_na_mesa > 0) {
         for (int i = 0; i < n_cartas_na_mesa; i++) {
-            int forca_atual = get_forca_interna(mesa[i]);
+            int forca_atual = get_forca(mesa[i], manilha_global);
             if (forca_atual > forca_max_mesa) {
                 forca_max_mesa = forca_atual;
             }
@@ -122,37 +87,12 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
     bool modo_urgencia = (vitorias_necessarias >= cartas_restantes && vitorias_necessarias > 0);
 
     if (vitorias < minha_aposta_global) {
-        if (n_cartas_na_mesa == 0) {
-            int idx_lider = -1;
-            int forca_lider = -1;
-            for (int i = 0; i < num_cartas_total_rodada; i++) {
-                if (minha_mao_global[i].valor == -1) continue;
-                int f = get_forca_interna(minha_mao_global[i]);
-                if (f < 10 && f > forca_lider) {
-                    idx_lider = i;
-                    forca_lider = f;
-                }
-            }
-            if (idx_lider != -1) {
-                indice_escolhido = idx_lider;
-            } else {
-                forca_lider = 101;
-                for (int i = 0; i < num_cartas_total_rodada; i++) {
-                    if (minha_mao_global[i].valor == -1) continue;
-                    int f = get_forca_interna(minha_mao_global[i]);
-                    if (f < forca_lider) {
-                        idx_lider = i;
-                        forca_lider = f;
-                    }
-                }
-                indice_escolhido = idx_lider;
-            }
-        } else if (modo_urgencia) {
+        if (modo_urgencia) {
             int idx_vencedora = -1;
             int forca_vencedora = 101;
             for(int i = 0; i < num_cartas_total_rodada; i++){
                 if(minha_mao_global[i].valor == -1) continue;
-                int f = get_forca_interna(minha_mao_global[i]);
+                int f = get_forca(minha_mao_global[i], manilha_global);
                 if(f > forca_max_mesa && f < forca_vencedora){
                     idx_vencedora = i;
                     forca_vencedora = f;
@@ -164,7 +104,7 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
             int forca_vencedora_comum = 10;
             for (int i = 0; i < num_cartas_total_rodada; i++) {
                 if (minha_mao_global[i].valor == -1) continue;
-                int f = get_forca_interna(minha_mao_global[i]);
+                int f = get_forca(minha_mao_global[i], manilha_global);
                 if (f >= 10) continue;
                 if (f > forca_max_mesa && f < forca_vencedora_comum) {
                     idx_vencedora_comum = i;
@@ -178,7 +118,7 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
                 int forca_vencedora_manilha = 101;
                 for (int i = 0; i < num_cartas_total_rodada; i++) {
                     if (minha_mao_global[i].valor == -1) continue;
-                    int f = get_forca_interna(minha_mao_global[i]);
+                    int f = get_forca(minha_mao_global[i], manilha_global);
                     if (f > forca_max_mesa && f < forca_vencedora_manilha) {
                         idx_vencedora_manilha = i;
                         forca_vencedora_manilha = f;
@@ -193,7 +133,7 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
             int forca_pior_carta = 101;
             for (int i = 0; i < num_cartas_total_rodada; i++) {
                 if (minha_mao_global[i].valor == -1) continue;
-                int f = get_forca_interna(minha_mao_global[i]);
+                int f = get_forca(minha_mao_global[i], manilha_global);
                 if (f < forca_pior_carta) {
                     idx_pior_carta = i;
                     forca_pior_carta = f;
@@ -206,7 +146,7 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
         int forca_maior_perdedora = -1;
         for (int i = 0; i < num_cartas_total_rodada; i++) {
             if (minha_mao_global[i].valor == -1) continue;
-            int f = get_forca_interna(minha_mao_global[i]);
+            int f = get_forca(minha_mao_global[i], manilha_global);
             if (f < forca_max_mesa && f > forca_maior_perdedora) {
                 idx_maior_perdedora = i;
                 forca_maior_perdedora = f;
@@ -219,7 +159,7 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
             int forca_pior_carta = 101;
             for (int i = 0; i < num_cartas_total_rodada; i++) {
                 if (minha_mao_global[i].valor == -1) continue;
-                int f = get_forca_interna(minha_mao_global[i]);
+                int f = get_forca(minha_mao_global[i], manilha_global);
                 if (f < forca_pior_carta) {
                     idx_pior_carta = i;
                     forca_pior_carta = f;
