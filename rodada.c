@@ -14,7 +14,7 @@ void distribuir_cartas(Rodada* r, int num_jogadores, Carta* baralho, int* idx) {
 void iniciar_rodada(Rodada* r, int numero, int num_jogadores, int jogador_inicial, Carta* baralho) {
     r->numero = numero;
     r->num_jogadores = num_jogadores;
-    r->cartas_por_jogador = numero + 1; // rodada 0 tem 2 cartas, rodada 4 tem 5 etc
+    r->cartas_por_jogador = numero + 1; 
     r->jogador_inicial = jogador_inicial;
     r->pontos_acumulados = 0;
 
@@ -25,12 +25,14 @@ void iniciar_rodada(Rodada* r, int numero, int num_jogadores, int jogador_inicia
 
     for (int j = 0; j < num_jogadores; j++) {
         r->cartas_restantes[j] = r->cartas_por_jogador;
-        r->apostas[j] = 0;     
+        r->apostas[j] = 0;      
         r->vitorias[j] = 0;
     }
 
     r->carta_virada = baralho[idx++];
-    r->manilha = definir_manilha(r->carta_virada);
+    
+    // AQUI ESTAVA O ERRO FINAL: trocamos 'definir_manilha' por 'get_manilha'
+    r->manilha = get_manilha(r->carta_virada);
 }
 
 // Atualiza o jogador inicial com base no vencedor da mão
