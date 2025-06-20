@@ -17,7 +17,9 @@
 Jogo jogo;
 
 void iniciar_jogadores() {
-    jogo.nomes[0] = nome_16882202();
+    // AQUI ESTÁ A ÚNICA MUDANÇA:
+    jogo.nomes[0] = nome_jogador_16882202();
+    
     jogo.nomes[1] = nome_aleatorio2();
     jogo.nomes[2] = nome_simples();
     jogo.nomes[3] = nome_simples2();
@@ -54,8 +56,7 @@ void coletar_apostas(Rodada* r) {
         else if (j == 2) r->apostas[j] = apostar_simples(r->apostas);
         else if (j == 3) r->apostas[j] = apostar_simples2(r->apostas);
 
-        printf("%s:\t%d", jogo.nomes[j], r->apostas[j]);
-        getchar();
+        printf("%s:\t%d\n", jogo.nomes[j], r->apostas[j]);
     }
     printf("\n");
 }
@@ -73,7 +74,7 @@ int processar_jogadas(Rodada* r, Carta* cartas_na_mesa) {
         else if (j == 3) idx = jogar_simples2(cartas_na_mesa, i, r->vitorias[j]);
 
         if (checar_e_processar_descarte(idx, j, r, cartas_na_mesa)) {
-            printf("Jogador %s tentou descartar uma carta inválida e foi eliminado!\n", jogo.nomes[j]);
+            printf("Jogador %s tentou descartar uma carta invalida e foi eliminado!\n", jogo.nomes[j]);
             if (j == novo_jogador_inicial) {
                 novo_jogador_inicial = (novo_jogador_inicial + 1) % jogo.num_jogadores;
             }
