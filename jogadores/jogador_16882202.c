@@ -11,27 +11,37 @@ static Carta minha_mao_global[6];
 static int manilha_global;
 static int minha_aposta_global;
 
+static bool tracker_manilhas[4];
+static bool tracker_tres[4];
+static bool tracker_dois[4];
+static bool tracker_as[4];
+
 extern const Carta USADA;
 
-static int avaliar_potencial_carta(Carta c) {
-    if (c.valor == -1) return 0;
-
-    if (c.valor == manilha_global) {
-        return 70 + (c.naipe * 10); // Paus (naipe 3) = 100, Ouros (naipe 0) = 70
-    }
+static int get_forca_interna(Carta c) {
+    if (c.valor == -1) return -1;
+    if (c.valor == manilha_global) return 10 + c.naipe;
     switch(c.valor) {
-        case 3: return 50;
-        case 2: return 40;
-        case 1: return 30; // AS
-        case 12: return 10; // K
-        case 11: return 5; // J
-        case 10: return 2; // Q
-        default: return 1; // 4, 5, 6, 7
+        case QUATRO: return 0; case CINCO: return 1; case SEIS: return 2;
+        case SETE: return 3; case DAMA: return 4; case VALETE: return 5;
+        case REI: return 6; case AS: return 7; case DOIS: return 8;
+        case TRES: return 9;
+    }
+    return -1;
+}
+
+static void atualizar_trackers(const Carta* mesa, int n_cartas_na_mesa) {
+    for (int i = 0; i < n_cartas_na_mesa; i++) {
+        Carta c = mesa[i];
+        if (c.valor == manilha_global) tracker_manilhas[c.naipe] = false;
+        else if (c.valor == TRES) tracker_tres[c.naipe] = false;
+        else if (c.valor == DOIS) tracker_dois[c.naipe] = false;
+        else if (c.valor == AS) tracker_as[c.naipe] = false;
     }
 }
 
 const char* nome_16882202() {
-    return "Yonkou";
+    return "Gear 5";
 }
 
 void iniciar_16882202(const int id, const int n_jogadores) {
@@ -44,26 +54,29 @@ void nova_rodada_16882202(int rodada, const Carta carta_virada, int n_cartas, co
     for (int i = 0; i < n_cartas; i++) {
         minha_mao_global[i] = mao[i];
     }
+    for (int i = 0; i < 4; i++) {
+        tracker_manilhas[i] = true;
+        tracker_tres[i] = true;
+        tracker_dois[i] = true;
+        tracker_as[i] = true;
+    }
 }
 
 int apostar_16882202(const int* apostas) {
-    float potencial_total = 0;
+    int num_manilhas = 0;
+    bool tem_o_3 = false;
     for (int i = 0; i < num_cartas_total_rodada; i++) {
-        potencial_total += avaliar_potencial_carta(minha_mao_global[i]);
-    }
-    
-    float potencial_medio_por_carta = potencial_total / num_cartas_total_rodada;
-    
-    if (potencial_medio_por_carta > 60) {
-        minha_aposta_global = round(num_cartas_total_rodada * 0.75);
-    } else if (potencial_medio_por_carta > 40) {
-        minha_aposta_global = round(num_cartas_total_rodada * 0.5);
-    } else if (potencial_medio_por_carta > 20) {
-        minha_aposta_global = round(num_cartas_total_rodada * 0.25);
-    } else {
-        minha_aposta_global = 0;
+        int forca = get_forca_interna(minha_mao_global[i]);
+        if (forca >= 10) num_manilhas++;
+        if (forca == 9) tem_o_3 = true;
     }
 
+    if (num_manilhas > 0) {
+        minha_aposta_global = num_manilhas + (tem_o_3 ? 1 : 0);
+    } else {
+        minha_aposta_global = (tem_o_3 ? 1 : 0);
+    }
+    
     if (minha_aposta_global > num_cartas_total_rodada) {
         minha_aposta_global = num_cartas_total_rodada;
     }
@@ -71,73 +84,103 @@ int apostar_16882202(const int* apostas) {
 }
 
 int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
+    atualizar_trackers(mesa, n_cartas_na_mesa);
+
     int forca_max_mesa = -1;
     if (n_cartas_na_mesa > 0) {
         for (int i = 0; i < n_cartas_na_mesa; i++) {
-            // Usa o potencial para comparar, mas precisa da força real para vencer
-            int forca_atual_na_mesa = avaliar_potencial_carta(mesa[i]);
-            if (forca_atual_na_mesa > forca_max_mesa) {
-                forca_max_mesa = forca_atual_na_mesa;
+            int forca_atual = get_forca_interna(mesa[i]);
+            if (forca_atual > forca_max_mesa) {
+                forca_max_mesa = forca_atual;
             }
         }
     }
 
     int indice_escolhido = -1;
+    int vitorias_necessarias = minha_aposta_global - vitorias;
+    int cartas_restantes = 0;
+    for (int i = 0; i < num_cartas_total_rodada; i++) {
+        if (minha_mao_global[i].valor != -1) cartas_restantes++;
+    }
+    bool modo_urgencia = (vitorias_necessarias >= cartas_restantes && vitorias_necessarias > 0);
 
     if (vitorias < minha_aposta_global) {
-        // TENTAR GANHAR com a carta de menor potencial que ainda vence
-        int idx_candidato = -1;
-        int potencial_candidato = 101; 
-        for (int i = 0; i < num_cartas_total_rodada; i++) {
-            if (minha_mao_global[i].valor == -1) continue;
-            int p = avaliar_potencial_carta(minha_mao_global[i]);
-            if (p > forca_max_mesa && p < potencial_candidato) {
-                idx_candidato = i;
-                potencial_candidato = p;
+        if (modo_urgencia) {
+            int idx_vencedora = -1;
+            int forca_vencedora = 101;
+            for(int i = 0; i < num_cartas_total_rodada; i++){
+                if(minha_mao_global[i].valor == -1) continue;
+                int f = get_forca_interna(minha_mao_global[i]);
+                if(f > forca_max_mesa && f < forca_vencedora){
+                    idx_vencedora = i;
+                    forca_vencedora = f;
+                }
             }
-        }
-
-        if (idx_candidato != -1) {
-            indice_escolhido = idx_candidato;
+            indice_escolhido = idx_vencedora;
         } else {
-            // Se não pode ganhar, descarta a de menor potencial
-            int idx_pior_carta = -1;
-            int potencial_pior_carta = 101;
+            int idx_vencedora_comum = -1;
+            int forca_vencedora_comum = 10;
             for (int i = 0; i < num_cartas_total_rodada; i++) {
                 if (minha_mao_global[i].valor == -1) continue;
-                int p = avaliar_potencial_carta(minha_mao_global[i]);
-                if (p < potencial_pior_carta) {
+                int f = get_forca_interna(minha_mao_global[i]);
+                if (f >= 10) continue;
+                if (f > forca_max_mesa && f < forca_vencedora_comum) {
+                    idx_vencedora_comum = i;
+                    forca_vencedora_comum = f;
+                }
+            }
+            if (idx_vencedora_comum != -1) {
+                indice_escolhido = idx_vencedora_comum;
+            } else {
+                int idx_vencedora_manilha = -1;
+                int forca_vencedora_manilha = 101;
+                for (int i = 0; i < num_cartas_total_rodada; i++) {
+                    if (minha_mao_global[i].valor == -1) continue;
+                    int f = get_forca_interna(minha_mao_global[i]);
+                    if (f > forca_max_mesa && f < forca_vencedora_manilha) {
+                        idx_vencedora_manilha = i;
+                        forca_vencedora_manilha = f;
+                    }
+                }
+                indice_escolhido = idx_vencedora_manilha;
+            }
+        }
+        
+        if(indice_escolhido == -1){
+            int idx_pior_carta = -1;
+            int forca_pior_carta = 101;
+            for (int i = 0; i < num_cartas_total_rodada; i++) {
+                if (minha_mao_global[i].valor == -1) continue;
+                int f = get_forca_interna(minha_mao_global[i]);
+                if (f < forca_pior_carta) {
                     idx_pior_carta = i;
-                    potencial_pior_carta = p;
+                    forca_pior_carta = f;
                 }
             }
             indice_escolhido = idx_pior_carta;
         }
     } else {
-        // TENTAR PERDER com a carta de maior potencial que ainda perde
-        int idx_candidato = -1;
-        int potencial_candidato = -1;
+        int idx_maior_perdedora = -1;
+        int forca_maior_perdedora = -1;
         for (int i = 0; i < num_cartas_total_rodada; i++) {
             if (minha_mao_global[i].valor == -1) continue;
-            int p = avaliar_potencial_carta(minha_mao_global[i]);
-            if (p < forca_max_mesa && p > potencial_candidato) {
-                idx_candidato = i;
-                potencial_candidato = p;
+            int f = get_forca_interna(minha_mao_global[i]);
+            if (f < forca_max_mesa && f > forca_maior_perdedora) {
+                idx_maior_perdedora = i;
+                forca_maior_perdedora = f;
             }
         }
-        
-        if (idx_candidato != -1) {
-            indice_escolhido = idx_candidato;
+        if (idx_maior_perdedora != -1) {
+            indice_escolhido = idx_maior_perdedora;
         } else {
-            // Forçado a ganhar, joga a de menor potencial
             int idx_pior_carta = -1;
-            int potencial_pior_carta = 101;
+            int forca_pior_carta = 101;
             for (int i = 0; i < num_cartas_total_rodada; i++) {
                 if (minha_mao_global[i].valor == -1) continue;
-                int p = avaliar_potencial_carta(minha_mao_global[i]);
-                if (p < potencial_pior_carta) {
+                int f = get_forca_interna(minha_mao_global[i]);
+                if (f < forca_pior_carta) {
                     idx_pior_carta = i;
-                    potencial_pior_carta = p;
+                    forca_pior_carta = f;
                 }
             }
             indice_escolhido = idx_pior_carta;
