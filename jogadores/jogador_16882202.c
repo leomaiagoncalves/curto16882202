@@ -2,6 +2,7 @@
 #include "../baralho.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 static int meu_id_global;
 static int num_cartas_total_rodada;
@@ -42,13 +43,29 @@ void nova_rodada_16882202(int rodada, const Carta carta_virada, int n_cartas, co
 }
 
 int apostar_16882202(const int* apostas) {
-    int cartas_fortes = 0;
+    int num_manilhas = 0;
+    bool tem_o_3 = false;
+
     for (int i = 0; i < num_cartas_total_rodada; i++) {
-        if (get_forca_interna(minha_mao_global[i]) >= 7) {
-            cartas_fortes++;
+        int forca = get_forca_interna(minha_mao_global[i]);
+        if (forca >= 10) {
+            num_manilhas++;
+        }
+        if (forca == 9) {
+            tem_o_3 = true;
         }
     }
-    minha_aposta_global = cartas_fortes;
+
+    if (num_manilhas > 0) {
+        minha_aposta_global = num_manilhas + (tem_o_3 ? 1 : 0);
+    } else {
+        minha_aposta_global = (tem_o_3 ? 1 : 0);
+    }
+    
+    if (minha_aposta_global > num_cartas_total_rodada) {
+        minha_aposta_global = num_cartas_total_rodada;
+    }
+
     return minha_aposta_global;
 }
 
@@ -64,53 +81,74 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
     }
 
     int indice_escolhido = -1;
+    int vitorias_necessarias = minha_aposta_global - vitorias;
+    
+    int cartas_restantes = 0;
+    for (int i = 0; i < num_cartas_total_rodada; i++) {
+        if (minha_mao_global[i].valor != -1) {
+            cartas_restantes++;
+        }
+    }
+
+    bool modo_urgencia = (vitorias_necessarias >= cartas_restantes && vitorias_necessarias > 0);
 
     if (vitorias < minha_aposta_global) {
-        int idx_vencedora_comum = -1;
-        int forca_vencedora_comum = 10;
-
-        for (int i = 0; i < num_cartas_total_rodada; i++) {
-            if (minha_mao_global[i].valor == -1) continue;
-            int f = get_forca_interna(minha_mao_global[i]);
-            if (f >= 10) continue; 
-            
-            if (f > forca_max_mesa && f < forca_vencedora_comum) {
-                idx_vencedora_comum = i;
-                forca_vencedora_comum = f;
+        if (modo_urgencia) {
+            int idx_vencedora = -1;
+            int forca_vencedora = 101;
+            for(int i = 0; i < num_cartas_total_rodada; i++){
+                if(minha_mao_global[i].valor == -1) continue;
+                int f = get_forca_interna(minha_mao_global[i]);
+                if(f > forca_max_mesa && f < forca_vencedora){
+                    idx_vencedora = i;
+                    forca_vencedora = f;
+                }
             }
-        }
+            indice_escolhido = idx_vencedora;
 
-        if (idx_vencedora_comum != -1) {
-            indice_escolhido = idx_vencedora_comum;
         } else {
-            int idx_vencedora_manilha = -1;
-            int forca_vencedora_manilha = 101;
-
+            int idx_vencedora_comum = -1;
+            int forca_vencedora_comum = 10;
             for (int i = 0; i < num_cartas_total_rodada; i++) {
                 if (minha_mao_global[i].valor == -1) continue;
                 int f = get_forca_interna(minha_mao_global[i]);
-                if (f > forca_max_mesa && f < forca_vencedora_manilha) {
-                    idx_vencedora_manilha = i;
-                    forca_vencedora_manilha = f;
+                if (f >= 10) continue;
+                if (f > forca_max_mesa && f < forca_vencedora_comum) {
+                    idx_vencedora_comum = i;
+                    forca_vencedora_comum = f;
                 }
             }
-
-            if (idx_vencedora_manilha != -1) {
-                indice_escolhido = idx_vencedora_manilha;
+            if (idx_vencedora_comum != -1) {
+                indice_escolhido = idx_vencedora_comum;
             } else {
-                int idx_pior_carta = -1;
-                int forca_pior_carta = 101;
+                int idx_vencedora_manilha = -1;
+                int forca_vencedora_manilha = 101;
                 for (int i = 0; i < num_cartas_total_rodada; i++) {
                     if (minha_mao_global[i].valor == -1) continue;
                     int f = get_forca_interna(minha_mao_global[i]);
-                    if (f < forca_pior_carta) {
-                        idx_pior_carta = i;
-                        forca_pior_carta = f;
+                    if (f > forca_max_mesa && f < forca_vencedora_manilha) {
+                        idx_vencedora_manilha = i;
+                        forca_vencedora_manilha = f;
                     }
                 }
-                indice_escolhido = idx_pior_carta;
+                indice_escolhido = idx_vencedora_manilha;
             }
         }
+        
+        if(indice_escolhido == -1){
+            int idx_pior_carta = -1;
+            int forca_pior_carta = 101;
+            for (int i = 0; i < num_cartas_total_rodada; i++) {
+                if (minha_mao_global[i].valor == -1) continue;
+                int f = get_forca_interna(minha_mao_global[i]);
+                if (f < forca_pior_carta) {
+                    idx_pior_carta = i;
+                    forca_pior_carta = f;
+                }
+            }
+            indice_escolhido = idx_pior_carta;
+        }
+
     } else {
         int idx_maior_perdedora = -1;
         int forca_maior_perdedora = -1;
@@ -122,7 +160,6 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
                 forca_maior_perdedora = f;
             }
         }
-        
         if (idx_maior_perdedora != -1) {
             indice_escolhido = idx_maior_perdedora;
         } else {
@@ -142,6 +179,13 @@ int jogar_16882202(Carta* mesa, int n_cartas_na_mesa, int vitorias) {
 
     if (indice_escolhido != -1) {
         minha_mao_global[indice_escolhido].valor = -1;
+    } else {
+        for(int i = 0; i < num_cartas_total_rodada; i++){
+            if(minha_mao_global[i].valor != -1){
+                indice_escolhido = i;
+                break;
+            }
+        }
     }
     
     return indice_escolhido;
